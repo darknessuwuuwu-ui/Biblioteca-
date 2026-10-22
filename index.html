@@ -21,7 +21,8 @@ body{margin:0;background:radial-gradient(70% 45% at 50% 0,rgba(255,196,110,.16),
 body.lock{overflow:hidden}
 body.dragging,body.dragging *{cursor:grabbing!important;user-select:none;-webkit-user-select:none}
 main{max-width:1000px;margin:0 auto;padding:28px 16px 56px}
-header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:20px}
+header{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px}
+.hbtns{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
 h1{font:700 clamp(32px,6vw,44px)/1.05 "Cormorant Garamond",Georgia,serif;letter-spacing:.01em;margin:0}
 .sub{color:var(--muted);font-size:14px;margin:6px 0 0}
 .btn{display:inline-flex;align-items:center;gap:6px;background:var(--btn);color:var(--btnink);border:1px solid var(--btn);border-radius:8px;padding:9px 18px;font:inherit;font-weight:500;cursor:pointer;white-space:nowrap}
@@ -29,12 +30,8 @@ h1{font:700 clamp(32px,6vw,44px)/1.05 "Cormorant Garamond",Georgia,serif;letter-
 .btn:focus-visible,.book:focus-visible,.rb:focus-visible,#q:focus-visible{outline:2px solid #5b8def;outline-offset:2px}
 #file{display:none}
 .tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}
-#q{flex:1;min-width:180px;height:40px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);padding:0 16px 0 40px;font:inherit;
+#q{flex:1;min-width:150px;height:40px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);padding:0 16px 0 40px;font:inherit;
  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%237b828a' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='7' cy='7' r='5'/%3E%3Cpath d='M11 11l4 4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:15px 50%}
-.chip{height:40px;padding:0 16px;font-weight:500}
-.chip .dot{width:12px;height:12px;border-radius:50%;background:conic-gradient(#c8553d,#d9a441,#4f7a4a,#3b5b92,#6c5b9e,#c8553d);opacity:.5}
-.chip[aria-pressed=true]{background:var(--btn);color:var(--btnink);border-color:var(--btn)}
-.chip[aria-pressed=true] .dot{opacity:1}
 .empty{color:var(--muted);margin:0 0 18px}
 /* estantes */
 #shelf{padding:0 8px;border:12px solid var(--wood);border-top-width:20px;border-radius:6px;background:repeating-linear-gradient(90deg,rgba(0,0,0,.07) 0 2px,transparent 2px 7px),linear-gradient(var(--in1),var(--in2));box-shadow:inset 0 0 40px rgba(0,0,0,.7),0 20px 40px rgba(0,0,0,.45)}
@@ -42,6 +39,9 @@ body.drag #shelf{outline:2px dashed var(--muted);outline-offset:8px;border-radiu
 .row{margin:0}
 .books{display:flex;align-items:flex-end;gap:3px;height:var(--bh);padding:16px 10px 0;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
 .plank{height:14px;margin:0 -8px;background:linear-gradient(var(--pl1),var(--pl2) 55%,var(--pl3));box-shadow:0 6px 10px rgba(0,0,0,.55)}
+/* placa con el nombre de cada sección */
+.rlabel{display:block;width:fit-content;max-width:calc(100% - 20px);margin:12px 0 0 10px;padding:3px 12px;border:0;border-radius:4px;cursor:pointer;font:600 12px/1.5 Inter,system-ui,sans-serif;letter-spacing:.02em;color:#2a1c0c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:linear-gradient(#e0bf6c,#b08a3a);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 2px 4px rgba(0,0,0,.5)}
+.rlabel:hover{filter:brightness(1.08)}
 .book{position:relative;flex:none;border:0;border-radius:3px 3px 0 0;cursor:grab;display:flex;justify-content:center;align-items:flex-start;padding:22px 0 0;font-family:inherit;
  background-image:linear-gradient(90deg,rgba(255,255,255,.16),transparent 30%,rgba(0,0,0,.14));box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);transition:transform .15s,opacity .15s;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
 .book:hover{transform:translateY(-8px)}
@@ -53,7 +53,7 @@ body.searching .book:not(.dim){transform:translateY(-8px)}
 .book.ph{opacity:.25;transform:none!important}
 .ghost-book{position:fixed;z-index:50;pointer-events:none;transform:scale(1.06) rotate(2deg);box-shadow:0 14px 28px rgba(0,0,0,.35);cursor:grabbing}
 /* selector de vista */
-.seg{display:inline-flex;height:40px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg{display:inline-flex;flex:none;height:40px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .seg button{border:0;background:transparent;color:var(--ink);font:inherit;font-weight:500;padding:0 14px;cursor:pointer}
 .seg button+button{border-left:1px solid var(--line)}
 .seg button[aria-pressed=true]{background:var(--btn);color:var(--btnink)}
@@ -105,19 +105,44 @@ body.searching .tbook:not(.dim) .cv{box-shadow:0 0 0 3px #f1c27a,0 10px 22px rgb
 #toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--btn);color:var(--btnink);padding:10px 18px;border-radius:999px;z-index:60;font-size:14px;max-width:90%}
 #toast[hidden]{display:none}
 @media (prefers-reduced-motion:reduce){.book{transition:none}}
-#settings{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px}
+.hbtns .btn svg{flex:none}
+#settings{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.5);display:flex;justify-content:flex-end}
 #settings[hidden]{display:none}
-.sheet{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:20px;width:min(380px,100%);box-shadow:0 20px 50px rgba(0,0,0,.5)}
-.sheet-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.sheet h2{font:700 26px/1.1 "Cormorant Garamond",Georgia,serif;margin:0}
-.sheet h3{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 2px}
-.set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.drawer{height:100%;width:min(400px,100%);overflow-y:auto;overscroll-behavior:contain;background:var(--card);color:var(--ink);border-left:1px solid var(--line);box-shadow:-20px 0 50px rgba(0,0,0,.5);padding:calc(16px + env(safe-area-inset-top,0px)) 18px calc(28px + env(safe-area-inset-bottom,0px));animation:drawin .22s ease}
+@keyframes drawin{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.drawer{animation:none}}
+.drawer-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.drawer h2{font:700 28px/1.1 "Cormorant Garamond",Georgia,serif;margin:0}
+#setclose{background:transparent;border:0;color:var(--ink);font-size:18px;cursor:pointer;width:36px;height:36px;border-radius:8px}
+#setclose:focus-visible,.drawer .btn:focus-visible,.grp>summary:focus-visible,.secname:focus-visible,.ib:focus-visible,.sw:focus-visible,.rlabel:focus-visible{outline:2px solid #5b8def;outline-offset:2px}
+/* grupos plegables del menú */
+.grp{border-top:1px solid var(--line);padding-bottom:12px}
+.grp>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:12px 0;font-weight:600}
+.grp>summary::-webkit-details-marker{display:none}
+.grp>summary::after{content:"";width:8px;height:8px;margin-right:4px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .15s}
+.grp[open]>summary::after{transform:rotate(-135deg)}
+.hint{color:var(--muted);font-size:13px;line-height:1.4;margin:0 0 10px}
+/* secciones */
+#seclist{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.sec{display:flex;align-items:center;gap:6px}
+.secname{flex:1;min-width:0;height:38px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);padding:0 12px;font:inherit;font-size:16px}
+.seccount{min-width:20px;text-align:center;color:var(--muted);font-size:13px}
+.ib{flex:none;width:34px;height:38px;padding:0;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--ink);font:inherit;cursor:pointer}
+.ib:disabled{opacity:.35;cursor:default}
+.ib.sure{background:#a93226;border-color:#a93226;color:#fff}
+/* filas de opciones */
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0}
+.set-row .lbl{display:block;flex:1;min-width:0}
+.set-row .hint{display:block;margin:2px 0 0}
 .set-row input{width:44px;height:30px;padding:0;border:0;background:none;cursor:pointer}
 .set-row input::-webkit-color-swatch-wrapper{padding:0}
 .set-row input::-webkit-color-swatch{border:1px solid var(--line);border-radius:6px}
 .set-row input::-moz-color-swatch{border:1px solid var(--line);border-radius:6px}
-.sheet .btn:focus-visible,#setclose:focus-visible{outline:2px solid #5b8def;outline-offset:2px}
-#setclose{background:transparent;border:0;color:var(--ink);font-size:18px;cursor:pointer;width:36px;height:36px;border-radius:8px}
+.sw{position:relative;flex:none;width:46px;height:26px;padding:0;border:1px solid var(--line);border-radius:999px;background:var(--bg);cursor:pointer}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--muted);transition:transform .15s,background .15s}
+.sw[aria-pressed=true]{background:var(--btn);border-color:var(--btn)}
+.sw[aria-pressed=true]::after{transform:translateX(20px);background:var(--btnink)}
+@media (prefers-reduced-motion:reduce){.sw::after,.grp>summary::after{transition:none}}
 </style>
 </head>
 <body>
@@ -127,17 +152,15 @@ body.searching .tbook:not(.dim) .cv{box-shadow:0 0 0 3px #f1c27a,0 10px 22px rgb
       <h1>Mi biblioteca</h1>
       <p class="sub" id="count"></p>
     </div>
-    <label class="btn" for="file" tabindex="0" id="addlbl">Añadir PDF</label>
-    <input id="file" type="file" accept="application/pdf,.pdf" multiple>
+    <div class="hbtns">
+      <label class="btn" for="file" tabindex="0" id="addlbl">Añadir PDF</label>
+      <input id="file" type="file" accept="application/pdf,.pdf" multiple>
+      <button class="btn ghost" id="setbtn" type="button" aria-haspopup="dialog" aria-controls="settings"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12"/></svg>Menú</button>
+    </div>
   </header>
   <div class="tools">
     <input id="q" type="search" placeholder="Buscar un libro" aria-label="Buscar un libro" autocomplete="off">
     <div class="seg" role="group" aria-label="Vista"><button type="button" id="modeS" aria-pressed="true" title="Ver los libros en la estantería">Estantería</button><button type="button" id="modeT" aria-pressed="false" title="Ver las portadas sobre una mesa">Mesa</button></div>
-    <button class="btn ghost chip tableonly" id="tidy" title="Coloca las portadas en filas ordenadas">Ordenar</button>
-    <button class="btn ghost chip shelfonly" id="auto" aria-pressed="false" title="Colorea cada lomo con el color más característico de su portada"><span class="dot"></span>Color de portada</button>
-    <button class="btn ghost chip shelfonly" id="addshelf">+ Estante</button>
-    <button class="btn ghost chip shelfonly" id="rmshelf" title="Quita el último estante si está vacío">− Estante</button>
-    <button class="btn ghost chip" id="setbtn" aria-haspopup="dialog">⚙ Ajustes</button>
   </div>
   <p class="empty" id="empty" hidden>Tu estantería está vacía. Arrastra tus PDF aquí o pulsa Añadir PDF.</p>
   <div id="shelf"></div>
@@ -145,12 +168,34 @@ body.searching .tbook:not(.dim) .cv{box-shadow:0 0 0 3px #f1c27a,0 10px 22px rgb
 </main>
 
 <div id="settings" hidden>
-  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="settitle">
-    <div class="sheet-h"><h2 id="settitle">Ajustes</h2><button id="setclose" aria-label="Cerrar ajustes">✕</button></div>
-    <h3>Colores</h3>
-    <label class="set-row">Fondo <input type="color" id="cbg" value="#18271f"></label>
-    <label class="set-row">Madera (estantería y mesa) <input type="color" id="cwood" value="#6b4529"></label>
-    <div class="set-row"><button class="btn ghost" id="creset">Restablecer colores</button></div>
+  <div class="drawer" role="dialog" aria-modal="true" aria-labelledby="settitle">
+    <div class="drawer-h"><h2 id="settitle">Menú</h2><button id="setclose" type="button" aria-label="Cerrar menú">✕</button></div>
+
+    <details class="grp" open>
+      <summary>Secciones</summary>
+      <div class="shelfonly">
+        <p class="hint">Cada sección es un estante. Cambia su nombre, súbela o bájala, o quítala.</p>
+        <div id="seclist"></div>
+        <button class="btn ghost" id="addshelf" type="button">+ Añadir sección</button>
+      </div>
+      <div class="tableonly">
+        <p class="hint">Las secciones se usan en la vista Estantería.</p>
+        <button class="btn ghost" id="gotoshelf" type="button">Ver estantería</button>
+      </div>
+    </details>
+
+    <details class="grp" open>
+      <summary>Vista</summary>
+      <label class="set-row shelfonly" for="auto"><span class="lbl">Color de portada<small class="hint">Pinta cada lomo con el color más característico de su portada</small></span><button class="sw" id="auto" type="button" aria-pressed="false"></button></label>
+      <div class="set-row tableonly"><span class="lbl">Ordenar portadas<small class="hint">Las coloca en filas ordenadas sobre la mesa</small></span><button class="btn ghost" id="tidy" type="button">Ordenar</button></div>
+    </details>
+
+    <details class="grp" open>
+      <summary>Colores</summary>
+      <label class="set-row"><span class="lbl">Fondo</span><input type="color" id="cbg" value="#18271f"></label>
+      <label class="set-row"><span class="lbl">Madera (estantería y mesa)</span><input type="color" id="cwood" value="#6b4529"></label>
+      <div class="set-row"><button class="btn ghost" id="creset" type="button">Restablecer colores</button></div>
+    </details>
   </div>
 </div>
 <div id="reader" hidden>
@@ -178,9 +223,11 @@ const COLORS=['#c8553d','#2f6f62','#3b5b92','#d9a441','#6c5b9e','#8b6b4f','#4f7a
 let books=[],mem=[],idb=null,pgMem={},D=null,suppress=false;
 
 /* ajustes: orden de libros, estantes y colores */
-let M={n:3,auto:false,bg:'#18271f',wood:'#6b4529',mode:'shelf',zc:0,b:{}};
+let M={n:3,auto:false,bg:'#18271f',wood:'#6b4529',mode:'shelf',zc:0,b:{},names:[]};
 try{Object.assign(M,JSON.parse(localStorage.getItem('estanteria-meta')||'{}'))}catch(e){}
+if(!Array.isArray(M.names))M.names=[];
 const saveM=()=>{try{localStorage.setItem('estanteria-meta',JSON.stringify(M))}catch(e){}};
+const secName=i=>(M.names[i]||'').trim()||('Sección '+(i+1));
 
 function toast(t){const e=$('#toast');e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,3200)}
 if(window.pdfjsLib){pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'}
@@ -215,7 +262,13 @@ $('#cbg').oninput=e=>{M.bg=e.target.value;saveM();applyTheme()};
 $('#cwood').oninput=e=>{M.wood=e.target.value;saveM();applyTheme()};
 $('#creset').onclick=()=>{M.bg='#18271f';M.wood='#6b4529';saveM();applyTheme()};
 const setP=$('#settings');
-function openSet(o){setP.hidden=!o;if(o)$('#setclose').focus();else $('#setbtn').focus()}
+function openSet(o,sec){
+  setP.hidden=!o;document.body.classList.toggle('lock',o);
+  if(!o){$('#setbtn').focus();return}
+  renderSections();
+  const r=sec!==undefined&&$('#seclist').children[sec],inp=r&&r.querySelector('.secname');
+  if(inp){inp.focus();inp.select()}else $('#setclose').focus();
+}
 $('#setbtn').onclick=()=>openSet(setP.hidden);
 $('#setclose').onclick=()=>openSet(false);
 setP.addEventListener('click',e=>{if(e.target===setP)openSet(false)});
@@ -254,6 +307,8 @@ function render(){
   if(dirty)saveM();
   for(let i=0;i<n;i++){
     const row=document.createElement('div');row.className='row';
+    const lb=document.createElement('button');lb.type='button';lb.className='rlabel';lb.dataset.i=i;lb.textContent=secName(i);lb.title='Cambiar el nombre de la sección';
+    lb.onclick=()=>openSet(true,i);row.appendChild(lb);
     const bx=document.createElement('div');bx.className='books';
     const list=books.filter(b=>M.b[b.id].s===i).sort((a,b)=>M.b[a.id].p-M.b[b.id].p);
     for(const b of list){
@@ -328,13 +383,55 @@ async function analyzeAll(){
   analyzing=false;render();toast('Colores listos');
 }
 $('#auto').onclick=()=>{M.auto=!M.auto;saveM();render();if(M.auto)analyzeAll()};
-$('#addshelf').onclick=()=>{M.n=(M.n||3)+1;saveM();render();scrollTo({top:document.body.scrollHeight,behavior:'smooth'})};
-$('#rmshelf').onclick=()=>{
-  const last=(M.n||3)-1;
-  if(books.some(b=>M.b[b.id]&&M.b[b.id].s===last)){toast('Mueve primero los libros del último estante');return}
-  if((M.n||3)<=1){toast('Debe quedar al menos un estante');return}
-  M.n=last;saveM();render();
+/* secciones: nombres, orden, altas y bajas (cada sección es un estante) */
+const TRASH='<svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8.5h5.8l.6-8.5M7 7v4M9 7v4"/></svg>';
+const inSec=i=>books.filter(b=>M.b[b.id]&&M.b[b.id].s===i);
+function syncLabels(){document.querySelectorAll('.rlabel').forEach(l=>l.textContent=secName(+l.dataset.i))}
+function ib(t,label,dis,fn){const b=document.createElement('button');b.type='button';b.className='ib';b.innerHTML=t;b.setAttribute('aria-label',label);b.title=label;b.disabled=dis;b.onclick=fn;return b}
+function renderSections(){
+  const box=$('#seclist'),n=M.n||3;box.textContent='';
+  for(let i=0;i<n;i++){
+    const row=document.createElement('div');row.className='sec';
+    const inp=document.createElement('input');inp.className='secname';inp.type='text';inp.maxLength=30;inp.value=M.names[i]||'';
+    inp.placeholder='Sección '+(i+1);inp.setAttribute('aria-label','Nombre de la sección '+(i+1));
+    inp.oninput=()=>{M.names[i]=inp.value;saveM();syncLabels()};
+    inp.onkeydown=e=>{if(e.key==='Enter')inp.blur()};
+    const c=inSec(i).length,cnt=document.createElement('span');cnt.className='seccount';cnt.textContent=c;cnt.title=c+(c===1?' libro':' libros');
+    const del=ib(TRASH,'Quitar sección',n<=1,()=>{
+      if(c>0&&!del.classList.contains('sure')){
+        del.classList.add('sure');
+        toast(`Toca otra vez para quitarla: ${c===1?'su libro pasará':'sus '+c+' libros pasarán'} a «${secName(i>0?i-1:1)}»`);
+        setTimeout(()=>del.classList.remove('sure'),3000);return;
+      }
+      removeSec(i);
+    });
+    row.append(inp,cnt,ib('↑','Subir sección',i===0,()=>moveSec(i,-1)),ib('↓','Bajar sección',i===n-1,()=>moveSec(i,1)),del);
+    box.appendChild(row);
+  }
+}
+function moveSec(i,d){
+  const j=i+d,n=M.n||3;if(j<0||j>=n)return;
+  for(const b of books){const m=M.b[b.id];if(!m)continue;if(m.s===i)m.s=j;else if(m.s===j)m.s=i}
+  const a=M.names[i]||'',c=M.names[j]||'';M.names[i]=c;M.names[j]=a;
+  saveM();render();renderSections();
+  const r=$('#seclist').children[j];
+  if(r){const bt=r.querySelectorAll('.ib')[d<0?0:1];(bt&&!bt.disabled?bt:r.querySelector('.secname')).focus()}
+}
+function removeSec(i){
+  const n=M.n||3;if(n<=1){toast('Debe quedar al menos una sección');return}
+  const to=i>0?i-1:1,mv=inSec(i).sort((a,b)=>M.b[a.id].p-M.b[b.id].p);
+  let p=Math.max(-1,...inSec(to).map(b=>M.b[b.id].p||0));
+  for(const b of mv){const m=M.b[b.id];m.s=to;m.p=++p}
+  for(const b of books){const m=M.b[b.id];if(m&&m.s>i)m.s--}
+  M.names.splice(i,1);M.n=n-1;saveM();render();renderSections();
+  toast(mv.length?`Sección quitada · ${mv.length} ${mv.length===1?'libro movido':'libros movidos'} a «${secName(to>i?to-1:to)}»`:'Sección quitada');
+}
+$('#addshelf').onclick=()=>{
+  M.n=(M.n||3)+1;saveM();render();renderSections();
+  const l=$('#seclist').lastElementChild;
+  if(l){l.scrollIntoView({block:'nearest'});l.querySelector('.secname').focus()}
 };
+$('#gotoshelf').onclick=()=>{setMode('shelf');renderSections()};
 
 /* arrastrar libros entre estantes (ratón y táctil) */
 const block=e=>e.preventDefault();
@@ -598,7 +695,7 @@ function setMode(m){
 }
 $('#modeS').onclick=()=>setMode('shelf');
 $('#modeT').onclick=()=>setMode('table');
-$('#tidy').onclick=tidyTable;
+$('#tidy').onclick=()=>{openSet(false);tidyTable()};
 
 /* lector */
 let doc=null,cur=null,page=1,zoom=1,task=null,tok=0;
