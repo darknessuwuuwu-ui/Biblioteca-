@@ -12,6 +12,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Cormorant+Garamond:wght@600;700&display=swap">
 <style>
 :root{--bg:#18271f;--ink:#f1e8d4;--muted:#a9b4a4;--line:#35493f;--card:#223429;--btn:#c9a45c;--btnink:#1d150e;--mark:#e5484d;--wood:#6b4529;--in1:#2d1c11;--in2:#1c110a;--pl1:#a8744a;--pl2:#7a4f2c;--pl3:#4d311c;--bh:226px;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -210,6 +211,36 @@ body.selecting main{padding-bottom:130px}
 .fopt .fc{color:var(--muted);font-size:13px}
 .fopt.new{border-style:dashed;color:var(--btn)}
 #player .bar.bot{gap:6px}
+.tbook.drag,.ghost-book{will-change:transform}
+/* modo tableta: más grande y con zonas táctiles amplias (sin capas nuevas: no altera el orden de apilado) */
+body.tablet{--bh:300px;font-size:17px}
+body.tablet main{max-width:1320px;padding:36px 32px 72px}
+body.tablet h1{font-size:clamp(40px,5vw,56px)}
+body.tablet .sub{font-size:16px}
+body.tablet .btn{padding:12px 22px;min-height:46px}
+body.tablet .btn.sm{padding:10px 18px;font-size:15px}
+body.tablet #q{height:48px}
+body.tablet .seg{height:48px}
+body.tablet .seg button{padding:0 22px}
+body.tablet .rlabel{font-size:14px;padding:4px 14px}
+body.tablet .plank{height:18px}
+body.tablet #surface{min-height:560px}
+body.tablet .tbook .cap{font-size:13px}
+body.tablet #vgrid{gap:10px;padding:18px}
+body.tablet .vname{font-size:15px}
+body.tablet .vcount{font-size:12px}
+body.tablet .crumb{padding:10px 12px}
+body.tablet .rb{min-width:52px;height:50px;padding:0 18px;font-size:17px}
+body.tablet #pnum{height:50px;width:68px}
+body.tablet .drawer{width:min(480px,100%)}
+body.tablet .set-row{padding:12px 0}
+body.tablet .set-row select{height:42px}
+body.tablet .secname{height:46px}
+body.tablet .ib{width:44px;height:46px}
+body.tablet .sw{width:54px;height:30px}
+body.tablet .sw::after{width:24px;height:24px}
+body.tablet .sw[aria-pressed=true]::after{transform:translateX(24px)}
+body.tablet .fopt{padding:14px 14px}
 </style>
 </head>
 <body>
@@ -277,6 +308,7 @@ body.selecting main{padding-bottom:130px}
 
     <details class="grp" open>
       <summary>Vista</summary>
+      <label class="set-row"><span class="lbl">Diseño<small class="hint">Automático usa el modo tableta en pantallas táctiles anchas</small></span><select id="dev"><option value="auto">Automático</option><option value="phone">Teléfono / PC</option><option value="tablet">Tableta</option></select></label>
       <label class="set-row shelfonly" for="auto"><span class="lbl">Color de portada<small class="hint">Pinta cada lomo con el color más característico de su portada</small></span><button class="sw" id="auto" type="button" aria-pressed="false"></button></label>
       <div class="set-row tableonly"><span class="lbl">Ordenar portadas<small class="hint">Las coloca en filas ordenadas sobre la mesa</small></span><button class="btn ghost" id="tidy" type="button">Ordenar</button></div>
       <label class="set-row vidonly"><span class="lbl">Tamaño de las miniaturas</span><input type="range" id="vsz" min="90" max="240" step="10" value="130"></label>
@@ -330,12 +362,16 @@ const COLORS=['#c8553d','#2f6f62','#3b5b92','#d9a441','#6c5b9e','#8b6b4f','#4f7a
 let books=[],vids=[],mem=[],idb=null,pgMem={},D=null,suppress=false;
 
 /* ajustes: orden de libros, estantes y colores */
-let M={n:3,auto:false,bg:'#18271f',wood:'#6b4529',mode:'shelf',zc:0,b:{},names:[],vsz:130,vsort:'recent',vf:[],vm:{},vcur:null};
+let M={n:3,auto:false,bg:'#18271f',wood:'#6b4529',mode:'shelf',zc:0,b:{},names:[],vsz:130,vsort:'recent',vf:[],vm:{},vcur:null,dev:'auto'};
 try{Object.assign(M,JSON.parse(localStorage.getItem('estanteria-meta')||'{}'))}catch(e){}
 if(!Array.isArray(M.names))M.names=[];
 if(!Array.isArray(M.vf))M.vf=[];
 if(!M.vm||typeof M.vm!=='object')M.vm={};
-const saveM=()=>{try{localStorage.setItem('estanteria-meta',JSON.stringify(M))}catch(e){}};
+let saveT=0;
+const flushM=()=>{clearTimeout(saveT);saveT=0;try{localStorage.setItem('estanteria-meta',JSON.stringify(M))}catch(e){}};
+const saveM=()=>{clearTimeout(saveT);saveT=setTimeout(flushM,250)};
+addEventListener('pagehide',flushM);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)flushM()});
 const secName=i=>(M.names[i]||'').trim()||('Sección '+(i+1));
 
 function toast(t){const e=$('#toast');e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,3200)}
@@ -384,6 +420,20 @@ setP.addEventListener('click',e=>{if(e.target===setP)openSet(false)});
 addEventListener('keydown',e=>{if(e.key==='Escape'&&!setP.hidden)openSet(false)});
 applyTheme();
 
+/* diseño: teléfono / tableta (automático = pantalla táctil y ancho >= 700 px) */
+const coarse=matchMedia('(pointer:coarse)');
+let tabNow=null;
+function isTab(){return M.dev==='tablet'||((M.dev||'auto')==='auto'&&innerWidth>=700&&coarse.matches)}
+function applyLayout(){const t=isTab();if(t===tabNow)return false;tabNow=t;document.body.classList.toggle('tablet',t);return true}
+applyLayout();
+/* arrastre: un solo cálculo por fotograma */
+let dRaf=0,tdRaf=0;
+const reqMoveDrag=()=>{if(dRaf)return;dRaf=requestAnimationFrame(()=>{dRaf=0;if(D&&D.on)moveDrag()})};
+const reqMoveTD=()=>{if(tdRaf)return;tdRaf=requestAnimationFrame(()=>{tdRaf=0;if(TD&&TD.on)moveTD()})};
+/* títulos normalizados en caché para la búsqueda */
+const NC=new Map();
+const nn=b=>{let v=NC.get(b.id);if(v===undefined)NC.set(b.id,v=norm(b.title));return v};
+
 /* estantería */
 function hash(s){let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))>>>0;return h}
 /* el tamaño del libro depende de su peso (tamaño del archivo): más pesado = más grande */
@@ -393,7 +443,7 @@ const dur=s=>{s=Math.round(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/
 let WS={min:0,max:0};
 function stats(){const a=books.map(wt);WS.min=Math.min(...a);WS.max=Math.max(...a)}
 function tOf(b){if(WS.max<=WS.min)return .5;const l=Math.log;return(l(wt(b)+1)-l(WS.min+1))/(l(WS.max+1)-l(WS.min+1))}
-function dims(b){const h=hash(b.id+b.title),t=tOf(b),S=1;
+function dims(b){const h=hash(b.id+b.title),t=tOf(b),S=tabNow?1.3:1;
   const m=M.b[b.id],c=(M.auto&&m&&m.c)||COLORS[h%COLORS.length];
   return{w:Math.round((26+t*40)*S),h:Math.round((115+t*80+h%9)*S),f:Math.round((13+t*4)*S),c}}
 function ink(hex){const n=parseInt(hex.slice(1),16);return .299*(n>>16)+.587*(n>>8&255)+.114*(n&255)>150?'#14171a':'#fff'}
@@ -437,28 +487,46 @@ function render(){
   $('#auto').setAttribute('aria-pressed',M.auto);
   applyFilter();
 }
-let lastW=0;addEventListener('resize',()=>{const w=(M.mode==='table'?$('#surface'):$('#shelf')).clientWidth;if(w!==lastW){lastW=w;render()}});
+let lastW=0,rzT=0;
+addEventListener('resize',()=>{clearTimeout(rzT);rzT=setTimeout(()=>{
+  const ch=applyLayout(),w=(M.mode==='table'?$('#surface'):$('#shelf')).clientWidth;
+  if(ch||w!==lastW){lastW=w;render()}
+},140)});
 
 /* buscador */
 function applyFilter(){
   const q=norm($('#q').value.trim());let hits=0;
+  const T=new Map();for(const b of books)T.set(b.id,b);for(const b of vids)T.set(b.id,b);
   document.body.classList.toggle('searching',!!q);
   for(const el of document.querySelectorAll('.book,.tbook,.vtile:not(.vfolder)')){
-    const b=(el.classList.contains('vtile')?vids:books).find(x=>x.id===el.dataset.id),ok=!q||(b&&norm(b.title).includes(q));
+    const b=T.get(el.dataset.id),ok=!q||(b&&nn(b).includes(q));
     el.classList.toggle('dim',!ok);if(ok)hits++;
   }
   const vm=M.mode==='video',L=vm?(q?vids:vids.filter(b=>fOf(b)===curF())):books,w1=L.length===1?(vm?'video':'libro'):(vm?'videos':'libros');
   $('#count').textContent=!L.length?(vm?'Sin videos todavía':'Sin libros todavía'):q?`${hits} de ${L.length} ${w1}`:`${L.length} ${w1} · ${M.mode==='table'?'arrastra una portada para moverla por la mesa':vm?'toca uno para reproducirlo':'arrastra un lomo para cambiarlo de estante'}`;
 }
-$('#q').oninput=()=>{if(M.mode==='video')renderVideos();else applyFilter()};
+let qT=0;const runQ=()=>{clearTimeout(qT);if(M.mode==='video')renderVideos();else applyFilter()};
+$('#q').oninput=()=>{clearTimeout(qT);qT=setTimeout(runQ,120)};
 $('#q').onkeydown=e=>{
-  if(e.key==='Escape'){e.target.value='';applyFilter()}
-  else if(e.key==='Enter'){const el=document.querySelector('.book:not(.dim),.tbook:not(.dim),.vtile:not(.dim)');if(el&&$('#q').value.trim()){const v=el.classList.contains('vtile'),b=(v?vids:books).find(x=>x.id===el.dataset.id);if(b)(v?openVideo:openBook)(b)}}
+  if(e.key==='Escape'){e.target.value='';runQ()}
+  else if(e.key==='Enter'){runQ();const el=document.querySelector('.book:not(.dim),.tbook:not(.dim),.vtile:not(.dim)');if(el&&$('#q').value.trim()){const v=el.classList.contains('vtile'),b=(v?vids:books).find(x=>x.id===el.dataset.id);if(b)(v?openVideo:openBook)(b)}}
 };
 
+/* abre el PDF desde una URL de blob (sin duplicar el archivo en memoria); si falla, usa los datos */
+async function loadPdf(blob){
+  const u=URL.createObjectURL(blob);
+  try{
+    const d=await pdfjsLib.getDocument({url:u}).promise,od=d.destroy.bind(d);
+    d.destroy=()=>{try{URL.revokeObjectURL(u)}catch(e){}return od()};
+    return d;
+  }catch(e){
+    try{URL.revokeObjectURL(u)}catch(x){}
+    return pdfjsLib.getDocument({data:await blob.arrayBuffer()}).promise;
+  }
+}
 /* color más característico de la portada */
 async function coverColor(b){
-  const d=await pdfjsLib.getDocument({data:await b.blob.arrayBuffer()}).promise;
+  const d=await loadPdf(b.blob);
   try{
     const p=await d.getPage(1),w0=p.getViewport({scale:1}).width,vp=p.getViewport({scale:140/w0});
     const c=document.createElement('canvas');c.width=Math.ceil(vp.width);c.height=Math.ceil(vp.height);
@@ -566,7 +634,7 @@ addEventListener('pointermove',e=>{
     if(D.touch){if(m>8){clearTimeout(D.t);D=null}return}
     if(m<6)return;startDrag();
   }
-  moveDrag();
+  reqMoveDrag();
 });
 addEventListener('pointerup',()=>endDrag());
 addEventListener('pointercancel',()=>endDrag());
@@ -637,7 +705,7 @@ addEventListener('drop',e=>{if(e.dataTransfer&&e.dataTransfer.files.length)addFi
 const surface=$('#surface'),covers=new Map(),coverFail=new Set();
 let cdb=null,coverBusy=false,TD=null,tsup=false;
 const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
-const cardW=()=>innerWidth<640?116:150;
+const cardW=()=>tabNow?(innerWidth<900?170:200):(innerWidth<640?116:150);
 const cardH=(b,w)=>Math.round(w/clamp((covers.get(b.id)||{}).a||.72,.5,1.8))+30;
 
 /* las portadas se guardan en una base de datos aparte, sin tocar los libros */
@@ -648,7 +716,7 @@ const saveCover=c=>{if(cdb)cx('readwrite',s=>s.put(c)).catch(()=>{})};
 const dropCover=id=>{covers.delete(id);coverFail.delete(id);if(cdb)cx('readwrite',s=>s.delete(id)).catch(()=>{})};
 
 async function makeCover(b){
-  const d=await pdfjsLib.getDocument({data:await b.blob.arrayBuffer()}).promise;
+  const d=await loadPdf(b.blob);
   try{
     const p=await d.getPage(1),v1=p.getViewport({scale:1}),vp=p.getViewport({scale:360/v1.width});
     const c=document.createElement('canvas');c.width=Math.ceil(vp.width);c.height=Math.ceil(vp.height);
@@ -678,7 +746,7 @@ function fillCard(el,b){
   const cv=el.firstChild,c=covers.get(b.id),d=dims(b);
   el.style.setProperty('--a',clamp((c&&c.a)||.72,.5,1.8));
   cv.textContent='';
-  if(c&&c.u){const i=new Image();i.alt='';i.draggable=false;i.src=c.u;cv.appendChild(i);cv.style.removeProperty('--c');cv.style.removeProperty('--ci')}
+  if(c&&c.u){const i=new Image();i.alt='';i.draggable=false;i.decoding='async';i.src=c.u;cv.appendChild(i);cv.style.removeProperty('--c');cv.style.removeProperty('--ci')}
   else{cv.style.setProperty('--c',d.c);cv.style.setProperty('--ci',ink(d.c));const s=document.createElement('div');s.className='ph';s.textContent=b.title;cv.appendChild(s)}
 }
 function cardEl(b){
@@ -769,7 +837,7 @@ addEventListener('pointermove',e=>{
     if(TD.touch){if(m>8){clearTimeout(TD.t);TD=null}return}
     if(m<5)return;startTD();
   }
-  moveTD();
+  reqMoveTD();
 });
 addEventListener('pointerup',()=>endTD());
 addEventListener('pointercancel',()=>endTD());
@@ -777,7 +845,7 @@ function startTD(){
   if(!TD||TD.on)return;TD.on=true;
   TD.el.classList.add('drag');TD.el.style.zIndex=++M.zc;document.body.classList.add('dragging');
   if(navigator.vibrate)try{navigator.vibrate(12)}catch(e){}
-  const loop=()=>{if(!TD||!TD.on)return;if(TD.y<70)scrollBy(0,-12);else if(TD.y>innerHeight-70)scrollBy(0,12);moveTD();requestAnimationFrame(loop)};loop();
+  const loop=()=>{if(!TD||!TD.on)return;if(TD.y<70){scrollBy(0,-12);moveTD()}else if(TD.y>innerHeight-70){scrollBy(0,12);moveTD()}requestAnimationFrame(loop)};loop();
 }
 function moveTD(){
   if(!TD||!TD.on)return;
@@ -819,10 +887,12 @@ function setMode(m){
 $('#modeS').onclick=()=>setMode('shelf');
 $('#modeT').onclick=()=>setMode('table');
 $('#modeV').onclick=()=>setMode('video');
+$('#dev').onchange=e=>{M.dev=e.target.value;saveM();applyLayout();lastW=0;render()};
 $('#tidy').onclick=()=>{openSet(false);tidyTable()};
 
 /* ===== videos: miniaturas cuadradas con los primeros segundos ===== */
 const vgrid=$('#vgrid');
+const vsPx=()=>Math.round((M.vsz||130)*(tabNow?1.25:1));
 let vbusy=false;
 const getVt=id=>{try{const v=localStorage.getItem('vt:'+id);if(v)return +v}catch(e){}return pgMem['v'+id]||0};
 const setVt=(id,n)=>{pgMem['v'+id]=n;try{localStorage.setItem('vt:'+id,n)}catch(e){}};
@@ -858,7 +928,7 @@ function fillVid(el,b){
   const th=el.firstChild,c=covers.get(b.id),t=getVt(b.id);
   th.textContent='';th.className='vthumb';th.style.background='';
   if(c&&c.u){
-    const i=new Image();i.alt='';i.draggable=false;i.src=c.u;th.appendChild(i);
+    const i=new Image();i.alt='';i.draggable=false;i.decoding='async';i.src=c.u;th.appendChild(i);
     if(c.d){
       const d=document.createElement('span');d.className='dur';d.textContent=dur(c.d);th.appendChild(d);
       if(t>1){const p=document.createElement('i');p.className='prog';p.style.width=Math.min(100,t/c.d*100)+'%';th.appendChild(p)}
@@ -900,7 +970,7 @@ function renderVBar(){
 }
 function goFolder(id){M.vcur=id;saveM();renderVideos();scrollTo(0,0)}
 function renderVideos(){
-  vgrid.style.setProperty('--vs',(M.vsz||130)+'px');vgrid.textContent='';
+  vgrid.style.setProperty('--vs',vsPx()+'px');vgrid.textContent='';
   const q=norm($('#q').value.trim()),cf=curF(),list=sortedVids();
   if(!q&&cf===null)for(const f of M.vf)vgrid.appendChild(folderTile(f));
   const show=q?list:list.filter(b=>fOf(b)===cf);
@@ -1053,7 +1123,7 @@ vgrid.addEventListener('pointerdown',e=>{
 });
 vgrid.addEventListener('pointermove',e=>{if(lpPt&&Math.hypot(e.clientX-lpPt.x,e.clientY-lpPt.y)>8){clearTimeout(lpT);lpPt=null}});
 ['pointerup','pointercancel','pointerleave'].forEach(t=>vgrid.addEventListener(t,()=>{clearTimeout(lpT);lpPt=null}));
-$('#vsz').oninput=e=>{M.vsz=+e.target.value;saveM();vgrid.style.setProperty('--vs',M.vsz+'px')};
+$('#vsz').oninput=e=>{M.vsz=+e.target.value;saveM();vgrid.style.setProperty('--vs',vsPx()+'px')};
 $('#vsort').onchange=e=>{M.vsort=e.target.value;saveM();if(M.mode==='video')renderVideos()};
 
 /* reproductor de video */
@@ -1105,7 +1175,7 @@ async function openBook(b){
   $('#reader').hidden=false;document.body.classList.add('lock');
   $('#rtitle').textContent=b.title;$('#load').hidden=false;$('#load').textContent='Abriendo…';$('#canvas').hidden=true;
   resetDel();
-  try{doc=await pdfjsLib.getDocument({data:await b.blob.arrayBuffer()}).promise}
+  try{doc=await loadPdf(b.blob)}
   catch(e){toast('No se pudo abrir este PDF');closeReader();return}
   page=Math.min(getPg(b.id),doc.numPages);$('#pnum').max=doc.numPages;$('#ptot').textContent='/ '+doc.numPages;
   show();
@@ -1117,8 +1187,10 @@ async function show(){
   const box=$('#stage'),dpr=window.devicePixelRatio||1;
   const w0=p.getViewport({scale:1}).width;
   const s=Math.min((box.clientWidth-16)/w0,3)*zoom;
-  const vp=p.getViewport({scale:s*dpr}),c=$('#canvas');
-  c.width=vp.width;c.height=vp.height;c.style.width=vp.width/dpr+'px';c.style.height=vp.height/dpr+'px';
+  const base=p.getViewport({scale:s}),c=$('#canvas');
+  let k=dpr;const px=base.width*base.height*k*k;if(px>16e6)k*=Math.sqrt(16e6/px);
+  const vp=p.getViewport({scale:s*k});
+  c.width=Math.floor(vp.width);c.height=Math.floor(vp.height);c.style.width=base.width+'px';c.style.height=base.height+'px';
   $('#load').hidden=true;c.hidden=false;
   task=p.render({canvasContext:c.getContext('2d'),viewport:vp});
   try{await task.promise}catch(e){return}
@@ -1161,7 +1233,7 @@ $('#stage').addEventListener('touchend',e=>{
 
 (async()=>{try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
   const[i0]=await Promise.all([openDB(),loadCoverDB()]);idb=i0;try{const all=await db.all();books=all.filter(x=>x.kind!=='video');vids=all.filter(x=>x.kind==='video')}catch(e){books=[];vids=[]}
-  applyMode();$('#vsz').value=M.vsz;$('#vsort').value=M.vsort;lastW=(M.mode==='table'?surface:$('#shelf')).clientWidth;render();if(M.auto)analyzeAll();if(M.mode==='table')loadCovers();if(M.mode==='video')loadVidCovers()})();
+  applyLayout();applyMode();$('#dev').value=M.dev||'auto';$('#vsz').value=M.vsz;$('#vsort').value=M.vsort;lastW=(M.mode==='table'?surface:$('#shelf')).clientWidth;render();if(M.auto)analyzeAll();if(M.mode==='table')loadCovers();if(M.mode==='video')loadVidCovers()})();
 </script>
 <script>
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){
